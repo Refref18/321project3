@@ -87,18 +87,117 @@ def login_m():
     return render_template("manager_login.html",  user=current_user)
 
 
-@views.route('/user_page')
+@views.route('/user_page', methods=['GET', 'POST'])
 def user():
     if request.method == 'POST':
-        # RABİA KISMIIIIIIII!!!!!!!!!!!
         if request.form.get('action1') == 'View Drug Table':
-            pass
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM DrugBanks")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            for row in rows:
+                mycursor.execute(
+                    "SELECT R.smiles FROM Reactions R WHERE R.drugbank_id=%s ", (row['drugbank_id'],))
+                smiles = mycursor.fetchall()
+                if smiles != []:
+                    # smiles is added to the dictionary
+                    row['smiles'] = smiles[0]
+                else:
+                    row['smiles'] = ""
+                mycursor.execute(
+                    "SELECT R.target_name FROM Reactions R WHERE R.drugbank_id=%s ", (row['drugbank_id'],))
+                target = mycursor.fetchall()
+                if target != []:
+                    # target name is added to dictionary
+                    row['target_names'] = target
+                else:
+                    row['target_names'] = ""
+                mycursor.execute(
+                    "SELECT S.side_effect_name FROM Siders S, HasSideEffect H WHERE H.umls_cui=S.umls_cui and H.drugbank_id=%s ", (row['drugbank_id'],))
+                side_effect = mycursor.fetchall()
+                if side_effect != []:
+                    # target name is added to dictionary
+                    row['side_effect_names'] = side_effect
+                else:
+                    row['side_effect_names'] = ""
+
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['drugbank_id']] = row
+            headers = 'drugbank_id, drug_name,smiles,description,target_names,side_effect_names'
+            return rowdict
+            #redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
         if request.form.get('action2') == 'Drug Interaction Table':
-            pass
+            drugbank_id = request.form.get('drugbank_id')
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT I.drugbank_id_2, D2.name FROM InteractsWith I , Drugbanks D, Drugbanks D2 WHERE I.drugbank_id_1=D.drugbank_id and I.drugbank_id_2=D2.drugbank_id and D.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['drugbank_id_2']] = row
+            # input: drugbank_id
+            # output: interacted drugbank_id's and names of them
+            return rowdict
         if request.form.get('action3') == 'Side Effect Table':
-            pass
+            drugbank_id = request.form.get('drugbank_id2')
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT S.side_effect_name,S.umls_cui FROM Siders S, HasSideEffect H WHERE H.umls_cui=S.umls_cui and H.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['umls_cui']] = row
+            # input: drugbank_id
+            # output: side effects and names of them
+            return rowdict
         if request.form.get('action4') == 'Interaction Proteins Table':
-            pass
+            drugbank_id = request.form.get('drugbank_id3')
+            print(drugbank_id)
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT R.uniprot_id, R.target_name FROM Reactions R WHERE R.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['uniprot_id']] = row
+            #input: drugbank_id
+            # output: uniprot_ids and their names
+            return rowdict
         if request.form.get('action5') == 'Interaction Drugs Table':
             pass
         if request.form.get('action6') == 'Add Contributor':
@@ -234,7 +333,7 @@ def manager():
             mycursor = mydb.cursor(buffered=True)
             mycursor.execute(
                 "SELECT * FROM DrugBanks")
-            #items = mycursor.fetchall()
+            # items = mycursor.fetchall()
             columns = [col[0] for col in mycursor.description]
             rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
             for row in rows:
