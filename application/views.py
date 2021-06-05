@@ -10,7 +10,7 @@ from flask import Blueprint
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
-
+import json
 
 views = Blueprint('views', __name__)
 
@@ -146,25 +146,104 @@ def manager():
                 print("error")
         # Database managers shall be able to update affinity values of drugs using Reaction IDs
         if request.form.get('action2') == 'Update affinity values':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                reaction_id = request.form.get('reaction_id')
+                affinity_value = request.form.get('affinity_value')
+                mycursor.execute(
+                    "UPDATE Reactions SET affinity_nM = %s WHERE reaction_id =%s ", (affinity_value, reaction_id))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action2.1') == 'Delete Drug':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                drug_id = request.form.get('drug_id')
+                mycursor.execute(
+                    "DELETE FROM DrugBanks WHERE drugbank_id=%s", (drug_id,))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action3') == 'Delete protein':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                uniprot_id = request.form.get('uniprot_id')
+                mycursor.execute(
+                    "DELETE FROM UniProts WHERE uniprot_id=%s", (uniprot_id,))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action4.1') == 'Delete Contributor':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                doi = request.form.get('doi')
+                author = request.form.get('author1')
+                mycursor.execute(
+                    "DELETE FROM Wrote WHERE doi=%s and author=%s ", (doi, author))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action4.2') == 'Add Contributor':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                doi = request.form.get('doi1')
+                author = request.form.get('author')
+                mycursor.execute(
+                    "INSERT INTO Wrote(doi,author) VALUES(%s,%s)", (doi, author))
+                mydb.commit()
+            except Exception:
+                print("error")
 
-    """
-     and 
-    delete drugs using DrugBank IDs. 
-    Database managers shall be able to delete proteins using UniProt IDs.
-    Database managers shall be able to update contributors of papers=documents using Reaction IDs.
-    Database managers shall be able to separately view all drugs listed in DrugBank, all proteins listed in
-    UniProt, all side eects listed in SIDER, all drug - target interactions, all papers and their contributors
-listed in BindingDB, and all users in DTBank.
-    """
+        if request.form.get('action5') == 'View Tables':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM DrugBanks")
+            #items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            for row in rows:
+                row.pop('description', None)
+            print(row)
+            headers = 'drugbank_id, name'
+
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
     return render_template("manager_page.html",  user=current_user)
 
 
@@ -173,3 +252,13 @@ def error():
     if request.method == 'POST':
         return redirect(url_for('views.home'))
     return render_template("error_page.html",  user=current_user)
+
+
+@views.route('/table/<headers>/<objects>', methods=['GET', 'POST'])
+def table(headers=None, objects=None):
+    print(objects)
+    items = json.loads(objects)
+    head = headers.split(',')
+    return render_template('table.html',
+                           headers=head,
+                           objects=items)
