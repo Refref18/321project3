@@ -11,7 +11,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
 import json
-
+import pandas as pd
 views = Blueprint('views', __name__)
 
 
@@ -134,7 +134,10 @@ def user():
             for row in rows:
                 rowdict[row['drugbank_id']] = row
             headers = 'drugbank_id, drug_name,smiles,description,target_names,side_effect_names'
-            return rowdict
+
+            df = pd.DataFrame(rowdict)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
             #redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
 
         if request.form.get('action2') == 'Drug Interaction Table':
@@ -323,7 +326,7 @@ def manager():
             except Exception:
                 print("error")
 
-        if request.form.get('action5') == 'View Tables':
+        if request.form.get('action5') == 'View All Drugs':
             mydb = mysql.connector.connect(
                 host="localhost",
                 user="root",
@@ -343,7 +346,100 @@ def manager():
 
             return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
 
+        if request.form.get('action6') == 'View All Proteins':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM UniProts")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            headers = 'uniprot_id, sequence'
+
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
+        if request.form.get('action7') == 'View All Side Effects':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM UniProts")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            headers = 'umls_cui,side_effect_name'
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
+        if request.form.get('action8') == 'View All Drug-Target-Interactions':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT R.drugbank_id, R.target_name FROM Reactions R")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            df = pd.DataFrame(rows)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
+        if request.form.get('action9') == 'View All Papers':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute('SELECT DISTINCT doi FROM Wrote')
+            dois = mycursor.fetchall()
+            dic = {}
+            for doi in dois:
+                mycursor.execute(
+                    'SELECT author FROM Wrote')
+                authors = mycursor.fetchall()
+                dic[doi] = authors
+            print(dic)
+            df = pd.DataFrame(dic)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
+        if request.form.get('action10') == 'View All Users':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM Users")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            df = pd.DataFrame(rows)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
     return render_template("manager_page.html",  user=current_user)
+
+
+@views.route('/tables/', methods=['GET', 'POST'])
+def table2():
+    return render_template('table.html')
 
 
 @views.route('/error', methods=['GET', 'POST'])
@@ -358,6 +454,6 @@ def table(headers=None, objects=None):
     print(objects)
     items = json.loads(objects)
     head = headers.split(',')
-    return render_template('table.html',
+    return render_template('tab.html',
                            headers=head,
                            objects=items)
