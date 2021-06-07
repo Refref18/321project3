@@ -65,7 +65,7 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 
 # create db and tables
-for line in open(".\excelData\createtables-1.sql"):
+for line in open(".\excelData\createtables.sql"):
     mycursor.execute(line)
 
 mycursor.execute(("CREATE PROCEDURE FilterTargets(IN drugbankId VARCHAR(255), IN measure VARCHAR(255), IN affinityMin REAL, IN affinityMax REAL)"
