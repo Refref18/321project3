@@ -38,6 +38,10 @@ reactions_df = binding_df.drop(
     ['authors', 'institution'], axis=1, inplace=False)
 # print(reactions_df)
 
+papers_df = binding_df[['doi','institution']].drop_duplicates()
+print(papers_df)
+
+
 wrote_data = {'doi':  [], 'author': [], }
 for index, row in binding_df.iterrows():
     authors = (" " + row['authors']).split(";")
@@ -63,6 +67,13 @@ mycursor = mydb.cursor()
 # create db and tables
 for line in open(".\excelData\createtables.sql"):
     mycursor.execute(line)
+
+mycursor.execute(("CREATE PROCEDURE FilterTargets(IN drugbankId VARCHAR(255), IN measure VARCHAR(255), IN affinityMin REAL, IN affinityMax REAL)"
+"BEGIN "
+	"SELECT 	R.uniprot_id, R.target_name "
+	"FROM	dtbank.reactions R "
+	"WHERE	R.drugbank_id = drugbankId AND R.measure_name = measure AND affinityMin <= R.affinity_nM AND R.affinity_nM <= affinityMax; "
+"END;"))
 
 # insert Users
 for i, row in user_df.iterrows():
@@ -119,6 +130,11 @@ for i, row in interacts_with_df.iterrows():
 for i, row in reactions_df.iterrows():
     mycursor.execute(
         "INSERT INTO Reactions(reaction_id,drugbank_id,uniprot_id,target_name,smiles,measure_name,affinity_nM,doi) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", tuple(row))
+    mydb.commit()
+
+for i, row in papers_df.iterrows():
+    mycursor.execute(
+            "INSERT INTO Papers(doi,institution) VALUES(%s,%s)", tuple(row))
     mydb.commit()
 
 for i, row in wrote_df.iterrows():
