@@ -10,8 +10,11 @@ from flask import Blueprint
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
-import pandas as pd
+
 from flask import jsonify
+
+import json
+import pandas as pd
 
 views = Blueprint('views', __name__)
 
@@ -92,18 +95,122 @@ def login_m():
 def user():
     print('req ' + str(request))
     if request.method == 'POST':
+
         mydb = mysql.connector.connect(
             user='root', password='Greenwich82', host='localhost', database='dtbank')
         mycursor = mydb.cursor(buffered=True)
-        # RABİA KISMIIIIIIII!!!!!!!!!!!
+
         if request.form.get('action1') == 'View Drug Table':
-            pass
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM DrugBanks")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            for row in rows:
+                mycursor.execute(
+                    "SELECT R.smiles FROM Reactions R WHERE R.drugbank_id=%s ", (row['drugbank_id'],))
+                smiles = mycursor.fetchall()
+                if smiles != []:
+                    # smiles is added to the dictionary
+                    row['smiles'] = smiles[0]
+                else:
+                    row['smiles'] = ""
+                mycursor.execute(
+                    "SELECT R.target_name FROM Reactions R WHERE R.drugbank_id=%s ", (row['drugbank_id'],))
+                target = mycursor.fetchall()
+                if target != []:
+                    # target name is added to dictionary
+                    row['target_names'] = target
+                else:
+                    row['target_names'] = ""
+                mycursor.execute(
+                    "SELECT S.side_effect_name FROM Siders S, HasSideEffect H WHERE H.umls_cui=S.umls_cui and H.drugbank_id=%s ", (row['drugbank_id'],))
+                side_effect = mycursor.fetchall()
+                if side_effect != []:
+                    # target name is added to dictionary
+                    row['side_effect_names'] = side_effect
+                else:
+                    row['side_effect_names'] = ""
+
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['drugbank_id']] = row
+            headers = 'drugbank_id, drug_name,smiles,description,target_names,side_effect_names'
+
+            df = pd.DataFrame(rowdict)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+            #redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
         if request.form.get('action2') == 'Drug Interaction Table':
-            pass
+            drugbank_id = request.form.get('drugbank_id')
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT I.drugbank_id_2, D2.name FROM InteractsWith I , Drugbanks D, Drugbanks D2 WHERE I.drugbank_id_1=D.drugbank_id and I.drugbank_id_2=D2.drugbank_id and D.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['drugbank_id_2']] = row
+            # input: drugbank_id
+            # output: interacted drugbank_id's and names of them
+            return rowdict
         if request.form.get('action3') == 'Side Effect Table':
-            pass
+            drugbank_id = request.form.get('drugbank_id2')
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT S.side_effect_name,S.umls_cui FROM Siders S, HasSideEffect H WHERE H.umls_cui=S.umls_cui and H.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['umls_cui']] = row
+            # input: drugbank_id
+            # output: side effects and names of them
+            return rowdict
         if request.form.get('action4') == 'Interaction Proteins Table':
-            pass
+          drugbank_id = request.form.get('drugbank_id3')
+            print(drugbank_id)
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT R.uniprot_id, R.target_name FROM Reactions R WHERE R.drugbank_id=%s ", (drugbank_id,))
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            print(rows)
+            rowdict = {}
+            for row in rows:
+                rowdict[row['uniprot_id']] = row
+            #input: drugbank_id
+            # output: uniprot_ids and their names
+            return rowdict
 
         if request.form.get('action5') == 'Find Interacting Drugs':
             # input -> uniprot_id   output -> 'drugbank_id','drugbank_name'
@@ -153,7 +260,6 @@ def user():
                 "WHERE H.umls_cui = %s AND H.drugbank_id = D.drugbank_id"), (umls_cui,))
             dbResultsToHtml(mycursor)
             return redirect(url_for('views.table2'))
-            #return jsonify({'columns' : ('drugbank_id','drug_name'), 'rows': mycursor.fetchall()})
         
         if request.form.get('action9') == 'Search Keyword in Description':
             # input -> keyword  output -> 'drugbank_id','drug_name','description'
@@ -245,31 +351,199 @@ def manager():
                 print("error")
         # Database managers shall be able to update affinity values of drugs using Reaction IDs
         if request.form.get('action2') == 'Update affinity values':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                reaction_id = request.form.get('reaction_id')
+                affinity_value = request.form.get('affinity_value')
+                mycursor.execute(
+                    "UPDATE Reactions SET affinity_nM = %s WHERE reaction_id =%s ", (affinity_value, reaction_id))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action2.1') == 'Delete Drug':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                drug_id = request.form.get('drug_id')
+                mycursor.execute(
+                    "DELETE FROM DrugBanks WHERE drugbank_id=%s", (drug_id,))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action3') == 'Delete protein':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                uniprot_id = request.form.get('uniprot_id')
+                mycursor.execute(
+                    "DELETE FROM UniProts WHERE uniprot_id=%s", (uniprot_id,))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action4.1') == 'Delete Contributor':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                doi = request.form.get('doi')
+                author = request.form.get('author1')
+                mycursor.execute(
+                    "DELETE FROM Wrote WHERE doi=%s and author=%s ", (doi, author))
+                mydb.commit()
+            except Exception:
+                print("error")
         if request.form.get('action4.2') == 'Add Contributor':
-            pass
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="Greenwich82",
+                    database='dtbank'
+                )
+                mycursor = mydb.cursor(buffered=True)
+                doi = request.form.get('doi1')
+                author = request.form.get('author')
+                mycursor.execute(
+                    "INSERT INTO Wrote(doi,author) VALUES(%s,%s)", (doi, author))
+                mydb.commit()
+            except Exception:
+                print("error")
 
-    """
-     and 
-    delete drugs using DrugBank IDs. 
-    Database managers shall be able to delete proteins using UniProt IDs.
-    Database managers shall be able to update contributors of papers=documents using Reaction IDs.
-    Database managers shall be able to separately view all drugs listed in DrugBank, all proteins listed in
-    UniProt, all side eects listed in SIDER, all drug - target interactions, all papers and their contributors
-listed in BindingDB, and all users in DTBank.
-    """
+        if request.form.get('action5') == 'View All Drugs':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM DrugBanks")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            for row in rows:
+                row.pop('description', None)
+            print(row)
+            headers = 'drugbank_id, name'
+
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
+        if request.form.get('action6') == 'View All Proteins':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM UniProts")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            headers = 'uniprot_id, sequence'
+
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
+        if request.form.get('action7') == 'View All Side Effects':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM UniProts")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            headers = 'umls_cui,side_effect_name'
+            return redirect(url_for('views.table', headers=headers, objects=json.dumps(rows)))
+
+        if request.form.get('action8') == 'View All Drug-Target-Interactions':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT R.drugbank_id, R.target_name FROM Reactions R")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            df = pd.DataFrame(rows)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
+        if request.form.get('action9') == 'View All Papers':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute('SELECT DISTINCT doi FROM Wrote')
+            dois = mycursor.fetchall()
+            dic = {}
+            for doi in dois:
+                mycursor.execute(
+                    'SELECT author FROM Wrote')
+                authors = mycursor.fetchall()
+                dic[doi] = authors
+            print(dic)
+            df = pd.DataFrame(dic)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
+        if request.form.get('action10') == 'View All Users':
+            mydb = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="Greenwich82",
+                database='dtbank'
+            )
+            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute(
+                "SELECT * FROM Users")
+            # items = mycursor.fetchall()
+            columns = [col[0] for col in mycursor.description]
+            rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+            df = pd.DataFrame(rows)
+            df.to_html('application/templates/table.html')
+            return redirect(url_for('views.table2'))
+
     return render_template("manager_page.html",  user=current_user)
 
 
 @views.route('/tables/', methods=['GET', 'POST'])
 def table2():
     return render_template('table.html')
+
 
 @views.route('/error', methods=['GET', 'POST'])
 def error():
@@ -283,3 +557,13 @@ def dbResultsToHtml(mycursor):
     rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
     df = pd.DataFrame(rows)
     df.to_html('application/templates/table.html')
+
+@views.route('/table/<headers>/<objects>', methods=['GET', 'POST'])
+def table(headers=None, objects=None):
+    print(objects)
+    items = json.loads(objects)
+    head = headers.split(',')
+    return render_template('tab.html',
+                           headers=head,
+                           objects=items)
+
