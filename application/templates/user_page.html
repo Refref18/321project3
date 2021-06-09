@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <form method="post" action="/user_page">
+      
+        <input type="submit" value="View Drug Table" name="action1" />
+        <br>
+        <br>
+        <div>
+            <label for="drugbank_id">Drugbank ID :</label>
+            <input type="drugbank_id" class="form-control" id="drugbank_id" name="drugbank_id"
+                placeholder="Enter drugbank_id" />
+        </div>
+        <input type="submit" value="Drug Interaction Table" name="action2" />
+        <br>
+        <br>
+
+        <div>
+            <label for="drugbank_id2">Drugbank ID :</label>
+            <input type="drugbank_id2" class="form-control" id="drugbank_id2" name="drugbank_id2"
+                placeholder="Enter drugbank_id" />
+        </div>
+        <input type="submit" value="Side Effect Table" name="action3" />
+        <br>
+        <br>
+        <div>
+            <label for="drugbank_id3">Drugbank ID :</label>
+            <input type="drugbank_id3" class="form-control" id="drugbank_id3" name="drugbank_id3"
+                placeholder="Enter drugbank_id" />
+        </div>
+        <input type="submit" value="Interaction Proteins Table" name="action4" />
+
+        <br>
+        <br>
+        <div>
+            <label for="uniprot_id">Uniprot ID :</label>
+            <input type="uniprot_id" class="form-control" id="uniprot_id" name="uniprot_id" placeholder="Enter uniprot_id" />
+        </div>
+        <input type="submit" value="Find Interacting Drugs" name="action5" />
+        <br>
+        <br>
+
+        <input type="submit" value="Drugs That Effect Same Protein" name="action6" />
+        <br>
+        <br>
+        <input type="submit" value="Proteins That Bind the same Drug" name="action7" />
+        <br>
+        <br>
+        <div>
+            <label for="umls_cui">Umls CUI :</label>
+            <input type="umls_cui" class="form-control" id="umls_cui" name="umls_cui" placeholder="Enter umls_cui" />
+        </div>
+        <input type="submit" value="Drugs with spesific side effect" name="action8" />
+
+        <br>
+        <br>
+        <div>
+            <label for="keyword">Keyword :</label>
+            <input type="keyword" class="form-control" id="keyword" name="keyword" placeholder="Enter keyword" />
+        </div>
+        <input type="submit" value="Search Keyword in Description" name="action9" />
+
+        <br>
+        <br>
+        <div>
+            <label for="uniprot_id_2">Uniprot ID :</label>
+            <input type="uniprot_id_2" class="form-control" id="uniprot_id_2" name="uniprot_id_2" placeholder="Enter uniprot_id" />
+        </div>
+        <input type="submit" value="Drugs with least side effects" name="action10" />
+        <br>
+        <br>
+        <input type="submit" value="DOI of papers and contributors" name="action11" />
+        <br>
+        <br>
+        <input type="submit" value="Rank Institutes" name="action12" />
+     
+        <br>
+        <br>
+        <div>
+            <label for="drugbank_id_4">Drugbank ID :</label>
+            <input type="drugbank_id_4" class="form-control" id="drugbank_id_4" name="drugbank_id_4"
+                placeholder="Enter drugbank_id" />
+        </div>
+        <div>
+            <label for="measurement_type">Measurement Type :</label>
+            <input type="measurement_type" class="form-control" id="measurement_type" name="measurement_type"
+                placeholder="Enter measurement type" />
+        </div>
+        <div>
+            <label for="affinity_min">Minimum Affinity :</label>
+            <input type="affinity_min" class="form-control" id="affinity_min" name="affinity_min"
+                placeholder="Enter minimum affinity" />
+        </div>
+        <div>
+            <label for="affinity_max">Maximum Affinity :</label>
+            <input type="affinity_max" class="form-control" id="affinity_max" name="affinity_max"
+                placeholder="Enter maximum affinity" />
+        </div>
+        <input type="submit" value="Filter interacting targets of a specific drugs" name="action13" />
+        <br>
+        <br>
+
+    </form>
+
+</body>
+
+</html>
