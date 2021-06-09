@@ -93,7 +93,7 @@ def login_m():
 
 @views.route('/user_page', methods=['GET', 'POST'])
 def user():
-    print('req ' + str(request))
+
     if request.method == 'POST':
 
         mydb = mysql.connector.connect(
@@ -101,13 +101,6 @@ def user():
         mycursor = mydb.cursor(buffered=True)
 
         if request.form.get('action1') == 'View Drug Table':
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="Greenwich82",
-                database='dtbank'
-            )
-            mycursor = mydb.cursor(buffered=True)
             mycursor.execute(
                 "SELECT * FROM DrugBanks")
             # items = mycursor.fetchall()
@@ -152,13 +145,10 @@ def user():
 
         if request.form.get('action2') == 'Drug Interaction Table':
             drugbank_id = request.form.get('drugbank_id')
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="Greenwich82",
-                database='dtbank'
-            )
-            mycursor = mydb.cursor(buffered=True)
+            mycursor.execute("SELECT * FROM dtbank.drugbanks WHERE drugbank_id = %s", (drugbank_id,))
+            if mycursor.fetchall() == [] :
+                return render_template('error.html', error='Drugbank ID Not Found')
+
             mycursor.execute(
                 "SELECT I.drugbank_id_2, D2.name FROM InteractsWith I , Drugbanks D, Drugbanks D2 WHERE I.drugbank_id_1=D.drugbank_id and I.drugbank_id_2=D2.drugbank_id and D.drugbank_id=%s ", (drugbank_id,))
             columns = [col[0] for col in mycursor.description]
@@ -170,15 +160,13 @@ def user():
             # input: drugbank_id
             # output: interacted drugbank_id's and names of them
             return rowdict
+
         if request.form.get('action3') == 'Side Effect Table':
-            drugbank_id = request.form.get('drugbank_id2')
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="Greenwich82",
-                database='dtbank'
-            )
-            mycursor = mydb.cursor(buffered=True)
+            drugbank_id = request.form.get('drugbank_id2') 
+            mycursor.execute("SELECT * FROM dtbank.drugbanks WHERE drugbank_id = %s", (drugbank_id,))
+            if mycursor.fetchall() == [] :
+                return render_template('error.html', error='Drugbank ID Not Found')
+
             mycursor.execute(
                 "SELECT S.side_effect_name,S.umls_cui FROM Siders S, HasSideEffect H WHERE H.umls_cui=S.umls_cui and H.drugbank_id=%s ", (drugbank_id,))
             columns = [col[0] for col in mycursor.description]
@@ -190,15 +178,13 @@ def user():
             # input: drugbank_id
             # output: side effects and names of them
             return rowdict
+
         if request.form.get('action4') == 'Interaction Proteins Table':
-          drugbank_id = request.form.get('drugbank_id3')
-            print(drugbank_id)
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="Greenwich82",
-                database='dtbank'
-            )
+            drugbank_id = request.form.get('drugbank_id3') 
+            mycursor.execute("SELECT * FROM dtbank.drugbanks WHERE drugbank_id = %s", (drugbank_id,))
+            if mycursor.fetchall() == [] :
+                return render_template('error.html', error='Drugbank ID Not Found')
+
             mycursor = mydb.cursor(buffered=True)
             mycursor.execute(
                 "SELECT R.uniprot_id, R.target_name FROM Reactions R WHERE R.drugbank_id=%s ", (drugbank_id,))
@@ -222,7 +208,11 @@ def user():
             mycursor.execute(
              ("SELECT D.drugbank_id, D.name FROM dtbank.reactions R, dtbank.drugbanks D "
               "WHERE uniprot_id = %s AND R.drugbank_id = D.drugbank_id"), (uniprot_id,))
-            dbResultsToHtml(mycursor)
+            
+            result = dbResultsToHtml(mycursor)
+            if result == 'No Result Found':
+                return render_template('error.html', error='No Results Found')
+
             return redirect(url_for('views.table2'))
 
         if request.form.get('action6') == 'Drugs That Effect Same Protein':
@@ -258,7 +248,11 @@ def user():
             mycursor.execute(
              (" SELECT D.drugbank_id, D.name FROM dtbank.hassideeffect H, dtbank.drugbanks D " 
                 "WHERE H.umls_cui = %s AND H.drugbank_id = D.drugbank_id"), (umls_cui,))
-            dbResultsToHtml(mycursor)
+
+            result = dbResultsToHtml(mycursor)
+            if result == 'No Result Found':
+                return render_template('error.html', error='No Results Found')
+
             return redirect(url_for('views.table2'))
         
         if request.form.get('action9') == 'Search Keyword in Description':
@@ -266,7 +260,11 @@ def user():
             keyword = request.form.get('keyword')   
             mycursor.execute(
              " SELECT * FROM dtbank.drugbanks WHERE description LIKE %s", (('%' + keyword + '%'),))
-            dbResultsToHtml(mycursor)
+        
+            result = dbResultsToHtml(mycursor)
+            if result == 'No Result Found':
+                return render_template('error.html', error='No Results Found')
+
             return redirect(url_for('views.table2'))
         
         if request.form.get('action10') == 'Drugs with least side effects':
@@ -285,7 +283,11 @@ def user():
 							                                    "FROM dtbank.reactions R, dtbank.hassideeffect H "
 			                                                    "WHERE R.uniprot_id = %s AND R.drugbank_id = H.drugbank_id "
 						                                        "GROUP BY drugbank_id) Temp)"),(uniprot_id,uniprot_id))
-            dbResultsToHtml(mycursor)
+
+            result = dbResultsToHtml(mycursor)
+            if result == 'No Result Found':
+                return render_template('error.html', error='No Results Found')
+
             return redirect(url_for('views.table2'))
 
         if request.form.get('action11') == 'DOI of papers and contributors':
@@ -318,7 +320,11 @@ def user():
                 return render_template('error.html', error='Enter Affinity Max')
             mycursor.execute(
              (" CALL FilterTargets(%s, %s, %s, %s)"), (drugbank_id, measurement_type, affinity_min, affinity_max)) 
-            dbResultsToHtml(mycursor)
+
+            result = dbResultsToHtml(mycursor)
+            if result == 'No Result Found':
+                return render_template('error.html', error='No Results Found')
+
             return redirect(url_for('views.table2'))
 
 
@@ -554,9 +560,13 @@ def error():
 
 def dbResultsToHtml(mycursor):
     columns = [col[0] for col in mycursor.description]
-    rows = [dict(zip(columns, row)) for row in mycursor.fetchall()]
+    results = mycursor.fetchall()
+    if results == []:
+        return 'No Result Found'
+    rows = [dict(zip(columns, row)) for row in results]
     df = pd.DataFrame(rows)
     df.to_html('application/templates/table.html')
+    return 'Success'
 
 @views.route('/table/<headers>/<objects>', methods=['GET', 'POST'])
 def table(headers=None, objects=None):
