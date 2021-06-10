@@ -1,0 +1,171 @@
+{% block title %}{% endblock %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <form method="post" action="/manager_page">
+        <div class="form-group">
+            <div>
+                <label for="name">Name: </label>
+                <input type="name" class="form-control" id="name" name="name" placeholder="Enter Your Name" />
+            </div>
+            <div>
+                <label for="username">Username: </label>
+                <input type="username" class="form-control" id="username" name="username"
+                    placeholder="Enter Username" />
+            </div>
+            <div>
+                <label for="institution">Institution:</label>
+                <input type="institution" class="form-control" id="institution" name="institution"
+                    placeholder="Enter institute" />
+            </div>
+            <div>
+                <label for="password">Password :</label>
+                <input type="password" class="form-control" id="password" name="password"
+                    placeholder="Enter password" />
+            </div>
+            <input type="submit" value="Add new user" name="action1" />
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+
+        <div class="form-group">
+            <div>
+                <label for="reaction_id">Reaction ID :</label>
+                <input type="reaction_id" class="form-control" id="reaction_id" name="reaction_id"
+                    placeholder="Enter reaction_id" />
+            </div>
+            <div>
+                <label for="affinity_value">New Affinity Value :</label>
+                <input type="affinity_value" class="form-control" id="affinity_value" name="affinity_value"
+                    placeholder="Enter new affinity value" />
+            </div>
+            <input type="submit" value="Update affinity values" name="action2" />
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+
+        <div class="form-group">
+            <div>
+                <label for="drug_id">Drug ID :</label>
+                <input type="drug_id" class="form-control" id="drug_id" name="drug_id"
+                    placeholder="Enter drug ID to delete" />
+            </div>
+            <input type="submit" value="Delete Drug" name="action2.1" />
+            <br>
+            <br>
+            <br>
+            <br>
+
+        </div>
+
+        <div class="form-group">
+            <div>
+                <label for="uniprot_id">Protein ID</label>
+                <input type="uniprot_id" class="form-control" id="uniprot_id" name="uniprot_id"
+                    placeholder="Enter Protein ID to delete" />
+            </div>
+            <input type="submit" value="Delete protein" name="action3" />
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+        <div class="form-group">
+            <div>
+                <label for="doi">Document :</label>
+                <input type="doi" class="form-control" id="doi" name="doi" placeholder="Enter Doi" />
+            </div>
+            <div>
+                <label for="author1">Author :</label>
+                <input type="author1" class="form-control" id="author1" name="author1"
+                    placeholder="Enter Author to delete" />
+            </div>
+            <div>
+                <label for="ins3">Institution :</label>
+                <input type="ins3" class="form-control" id="ins3" name="ins3" placeholder="Enter Institution" />
+            </div>
+            <div>
+                <label for="username3">Username :</label>
+                <input type="username3" class="form-control" id="username3" name="username3"
+                    placeholder="Enter UserName" />
+            </div>
+            <input type="submit" value="Delete Contributor" name="action4.1" />
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+        <div class="form-group">
+            <div>
+                <label for="doi1">Document :</label>
+                <input type="doi1" class="form-control" id="doi1" name="doi1" placeholder="Enter Doi" />
+            </div>
+            <div>
+                <label for="author">Author :</label>
+                <input type="author" class="form-control" id="author" name="author" placeholder="Enter Author to add" />
+            </div>
+            <div>
+                <label for="ins4">Institution :</label>
+                <input type="ins4" class="form-control" id="ins4" name="ins4" placeholder="Enter Institution" />
+            </div>
+            <div>
+                <label for="username4">Username :</label>
+                <input type="username4" class="form-control" id="username4" name="username4"
+                    placeholder="Enter UserName" />
+            </div>
+            <input type="submit" value="Add Contributor" name="action4.2" />
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+        <input type="submit" value="View All Drugs" name="action5" />
+        <br>
+        <br>
+        <br>
+        <br>
+
+        <input type="submit" value="View All Proteins" name="action6" />
+        <br>
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="View All Side Effects" name="action7" />
+        <br>
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="View All Drug-Target-Interactions" name="action8" />
+        <br>
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="View All Papers" name="action9" />
+        <br>
+        <br>
+        <br>
+        <br>
+        <input type="submit" value="View All Users" name="action10" />
+        <br>
+        <br>
+        <br>
+        <br>
+    </form>
+
+
+</body>
+
+</html>
+{% endblock %}
