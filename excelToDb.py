@@ -39,7 +39,7 @@ reactions_df = binding_df.drop(
 # print(reactions_df)
 
 papers_df = binding_df[['doi', 'institution']].drop_duplicates()
-print(papers_df)
+#print(papers_df)
 
 
 wrote_data = {'doi':  [], 'author': [], }
@@ -91,9 +91,12 @@ for i, row in manager_df.iterrows():
     # sha256 should be done
     password = sha256_crypt.encrypt((row[1]))
     row[1] = password
-    mycursor.execute(
-        "INSERT INTO DatabaseManagers(username,password) VALUES(%s,%s)", tuple(row))
-    mydb.commit()
+    try:
+        mycursor.execute(
+            "INSERT INTO DatabaseManagers(username,password) VALUES(%s,%s)", tuple(row))
+        mydb.commit()
+    except Exception:
+        print('There can be at most 5 database managers.')
 
 
 # insert Managers

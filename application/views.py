@@ -483,8 +483,12 @@ def manager():
                 except Exception:
                     return render_template('error.html', error="Couldn't add the User")
             try:
+                '''
                 mycursor.execute(
                     "SELECT * FROM Wrote WHERE doi= %s", (doi,)
+                )'''
+                mycursor.execute(
+                    "SELECT * FROM Papers WHERE doi= %s and institution = %s", (doi, ins)
                 )
                 m = mycursor.fetchall()
                 print(m)
@@ -493,7 +497,7 @@ def manager():
                         "INSERT INTO Wrote(doi,author) VALUES(%s,%s)", (doi, author))
                     mydb.commit()
                 else:
-                    return render_template('error.html', error="No such DOI")
+                    return render_template('error.html', error="No such DOI and Institution")
 
             except Exception:
                 print(doi, author)
